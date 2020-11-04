@@ -13,7 +13,7 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach ($taksk as $task)
+                @foreach ($tasks as $task)
                 <tr>
                     <td>{{ $task->id }}</td>
                     <td>{{ $task->content }}</td>
