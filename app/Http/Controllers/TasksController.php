@@ -10,12 +10,21 @@ class TasksController extends Controller
 {
     public function index()
     {
-        //タスク一覧を取得
-        $tasks = Task::all();
-        // タスク一覧ビューでそれを表示
-        return view('tasks.index', [
-            'tasks' => $tasks,
-            ]);
+        $data = [];
+        if (\Auth::check()) { // 認証済みの場合
+            // 認証済みユーザを取得
+            $user = \Auth::user();
+            // ユーザの投稿の一覧を作成日時の降順で取得
+            $tasks = $user->tasks()->orderBy('created_at', 'desc')->paginate(10);
+
+            $data = [
+                'user' => $user,
+                'tasks' => $tasks,
+            ];
+        }
+
+        // Welcomeビューでそれらを表示
+        return view('welcome', $data);
     }
 
     public function create()
@@ -34,16 +43,19 @@ class TasksController extends Controller
         // バリデーション
         $request->validate ([
             'status' =>'required|max:10',
-            'content' =>'required|max:255',
+            'content' =>'required|max:20',
         ]);
         //タスクを作成
         $task = new Task;
         $task->status = $request->status;
         $task->content = $request->content;
+        $task->user_id = \Auth::id();
         $task->save();
 
-        // トップページへリダイレクトさせる
-        return redirect('/');
+
+        // 前のURLへリダイレクトさせる
+        return back();
+
     }
 
 
@@ -73,7 +85,7 @@ class TasksController extends Controller
         // バリデーション
         $request->validate([
             'status' => 'required|max:10',
-            'content' => 'required|max:255', 
+            'content' => 'required|max:20', 
         ]);
         
         // idの値でタスクを検索して取得
@@ -97,8 +109,11 @@ class TasksController extends Controller
     {
         //idの値でタスクを検索して取得
         $task = Task::findOrFail($id);
-        // タスクを削除
-        $task->delete();
+
+        // 認証済みユーザ（閲覧者）がその投稿の所有者である場合は、投稿を削除
+        if (\Auth::id() === $task->user_id) {
+            $task->delete();
+        }
 
         // トップページへリダイレクトさせる
         return redirect('/');
