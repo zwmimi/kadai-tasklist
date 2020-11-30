@@ -61,22 +61,29 @@ class TasksController extends Controller
 
     public function show($id)
     {
+        
         // idの値でタスクを検索して取得
         $task = Task::findOrFail($id);
         // タスク詳細ビューでそれを表示
-        return view('tasks.show', [
-            'task' => $task,
-        ]);
-    }
+        if (\Auth::id() === $task->user_id) {
+            return view('tasks.show',[
+                'task' =>$task,
+                ]);
+        }
+        return back();
+            }
 
     public function edit($id)
     {
         // idの値でタスクを検索して取得
         $task = Task::findOrFail($id);
         // タスク編集ビューでそれを表示
-        return view('tasks.edit', [
+        if(\Auth::id() === $task->user_id){
+            return view('tasks.edit', [
             'task' => $task,
         ]);
+        }
+        return back();
     }
 
 
@@ -91,12 +98,16 @@ class TasksController extends Controller
         // idの値でタスクを検索して取得
         $task = Task::findOrFail($id);
         // タスクを更新
+        if(\Auth::id() === $task->user_id){
+        
         $task->status =$request->status;
         $task->content = $request->content;
         $task->save();
 
         // トップページへリダイレクトさせる
         return redirect('/');
+        }
+        return back();
     }
 
     /**
